@@ -16,7 +16,6 @@ public:
 class Iceman : public Actor {
 public:
 	Iceman( int startX, int startY, Direction startDirection, float size, unsigned int depth);
-	void attributes(int health, int squirt, int sonarCharge, int gold_sack, Direction facing);
 	void doSomething();
 private:
 	int i_health;
