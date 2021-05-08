@@ -3,47 +3,43 @@
 
 #include "GraphObject.h"
 
+class StudentWorld;
+
+//--------------------------------------------------------Actor-----------------------------------------------------------------------------
 
 class Actor : public GraphObject {
 public:
-	
-	Actor(int imageID, int startX, int startY, Direction startDirection, float size, unsigned int depth);
 
-
-
+	Actor(int imageID, int startX, int startY, Direction startDirection, StudentWorld* world, float size, unsigned int depth);
+	virtual void doSomething() = 0;
+	StudentWorld* getWorld() const;
+	virtual ~Actor() {};
+private:
+	StudentWorld* sw;
 };
+
+//--------------------------------------------------------Iceman-----------------------------------------------------------------------------
 
 class Iceman : public Actor {
 public:
-	Iceman( int startX, int startY, Direction startDirection, float size, unsigned int depth);
+	Iceman(int startX, int startY, Direction startDirection, StudentWorld* world, float size, unsigned int depth);
 	void doSomething();
+	bool isAlive();
 private:
 	int i_health;
 	int i_squirt;
 	int i_sonarCharge;
-	int i_gold_sack ;
+	int i_gold_sack;
 	Direction i_facing;
 };
-//
-//class Protester : public Actor {
-//public:
-//	Protester(int imageID, int startX, int startY, Direction startDirection, float size = 1.0, unsigned int depth = 0);
-//	
-//};
-//
-//class HardcoreProtester : public Actor {
-//public:
-//	HardcoreProtester(int imageID, int startX, int startY, Direction startDirection, float size = 1.0, unsigned int depth = 0);
-//};
-//
-//
-//class Collectable : public GraphObject {
-//
-//	Collectable(int imageID, int startX, int startY, Direction startDirection, float size = 1.0, unsigned int depth = 0);
-//};
 
+//--------------------------------------------------------Ice-----------------------------------------------------------------------------
 
+class Ice : public Actor {
+public:
+	Ice(int x, int y, StudentWorld* world) :
+		Actor(IID_ICE, x, y, right, world, .25, 3) {}
+	void doSomething() { /*does nothing*/ }
+};
 
-// Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
-
-#endif // ACTOR_H_
+#endif
