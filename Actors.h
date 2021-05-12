@@ -42,4 +42,21 @@ public:
 	void doSomething() { /*does nothing*/ }
 };
 
+
+class Boulder :public Actor
+{
+public:
+	Boulder(int x, int y, StudentWorld* world):
+	Actor(IID_BOULDER, x, y, down, world, 1, 1.0), Alive(true) {
+		setVisible(true);
+	}
+
+	void doSomething();
+	bool isAlive();
+	void drop();
+
+
+private:
+	bool Alive;
+};
 #endif
