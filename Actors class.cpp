@@ -21,6 +21,8 @@ StudentWorld* Actor::getWorld() const
 	return sw;
 }
 
+
+
 //--------------------------------------------------------Iceman-----------------------------------------------------------------------------
 
 Iceman::Iceman(int startX, int startY, Direction startDirection, StudentWorld* world, float size = 1.0, unsigned int depth = 0) :
@@ -136,3 +138,42 @@ void Iceman::doSomething()
 	}
 
 }
+
+//----------------------------------------------Boulder----------------------
+
+bool Boulder::isAlive()
+{
+	if (Alive == false)
+	{
+		setVisible(false);
+		return false;
+	}
+
+	return true;
+}
+
+void Boulder::drop()
+{
+	int scanY = getY();
+	int scanX = getX();
+
+	if () // come back to
+	{
+
+	}
+
+}
+
+void Boulder::doSomething()
+{
+
+	if (!isAlive())
+	{
+		return;
+	}
+
+
+
+}
+
+
