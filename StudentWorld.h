@@ -27,6 +27,12 @@ public:
 	virtual void cleanUp();
 
 	void destroyIce(int x, int y);
+	//sets any ice object that comes in contact with the Iceman to not visible
+
+	bool checkIce(int x, int y);
+	//returns true if there is ice at the location parameter
+
+	Iceman* getPlayer();
 
 	~StudentWorld();
 private:
