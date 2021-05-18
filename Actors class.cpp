@@ -39,7 +39,7 @@ void Actor::setAliveStatus(bool status)
 
 Iceman::Iceman(int startX, int startY, Direction startDirection, StudentWorld* world, float size = 1.0, unsigned int depth = 0) :
 	Actor(IID_PLAYER, 30, 60, startDirection, world, size, depth), i_health(10), i_squirt(5), i_sonarCharge(1),
-	i_gold_sack(0), i_facing(right) {}
+	i_gold_sack(0), i_facing(right), i_points(0) {}
 
 bool Iceman::isAlive()
 {
@@ -79,7 +79,31 @@ void Iceman::doSomething()
 			if (getX() == 60) break;
 			setDirection(right);
 			this->moveTo(getX() + 1, getY()); break;
+		case 'd':
+			if (getX() == 60) break;
+			setDirection(right);
+			this->moveTo(getX() + 1, getY()); break;
+		case 'D':
+			if (getX() == 60) break;
+			setDirection(right);
+			this->moveTo(getX() + 1, getY()); break;
+		case 6:
+			if (getX() == 60) break;
+			setDirection(right);
+			this->moveTo(getX() + 1, getY()); break;
 		case KEY_PRESS_LEFT:
+			if (getX() == 0) break;
+			setDirection(left);
+			this->moveTo(getX() - 1, getY()); break;
+		case 'a':
+			if (getX() == 0) break;
+			setDirection(left);
+			this->moveTo(getX() - 1, getY()); break;
+		case 'A':
+			if (getX() == 0) break;
+			setDirection(left);
+			this->moveTo(getX() - 1, getY()); break;
+		case 4:
 			if (getX() == 0) break;
 			setDirection(left);
 			this->moveTo(getX() - 1, getY()); break;
@@ -87,14 +111,44 @@ void Iceman::doSomething()
 			if (getY() == 60) break;
 			setDirection(up);
 			this->moveTo(getX(), getY() + 1); break;
+		case 'w':
+			if (getY() == 60) break;
+			setDirection(up);
+			this->moveTo(getX(), getY() + 1); break;
+		case 'W':
+			if (getY() == 60) break;
+			setDirection(up);
+			this->moveTo(getX(), getY() + 1); break;
+		case 8:
+			if (getY() == 60) break;
+			setDirection(up);
+			this->moveTo(getX(), getY() + 1); break;
 		case KEY_PRESS_DOWN:
 			if (getY() == 0) break;
 			setDirection(down);
 			this->moveTo(getX(), getY() - 1); break;
-
+		case 's':
+			if (getY() == 0) break;
+			setDirection(down);
+			this->moveTo(getX(), getY() - 1); break;
+		case 'S':
+			if (getY() == 0) break;
+			setDirection(down);
+			this->moveTo(getX(), getY() - 1); break;
+		case 2:
+			if (getY() == 0) break;
+			setDirection(down);
+			this->moveTo(getX(), getY() - 1); break;
 		}
+
 	}
 
+}
+
+
+int Iceman::AccumulatePoints(int points)
+{
+	return i_points += points;
 }
 
 //--------------------------------------------------------Boulder-----------------------------------------------------------------------------
@@ -253,6 +307,7 @@ void Oil_Barrel::EraseOil()
 		
 		getWorld()->playSound(SOUND_FOUND_OIL);
 		setVisible(false);
+		player->AccumulatePoints(1000);
 	}
 
 
