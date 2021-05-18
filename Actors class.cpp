@@ -139,6 +139,11 @@ void Iceman::doSomething()
 			if (getY() == 0) break;
 			setDirection(down);
 			this->moveTo(getX(), getY() - 1); break;
+		case 'z':
+
+			getWorld()->addActor(new Gold(icemanX, icemanY, getWorld(), 0));
+		case 'Z':
+			getWorld()->addActor(new Gold(icemanY, icemanY, getWorld(), 0));
 		}
 
 	}
@@ -316,8 +321,62 @@ void Oil_Barrel::EraseOil()
 	}*/
 
 }
+//---------------------------------------------------------------Gold nugget
 
+bool Gold::ProximityCheck(int prox, Actor* a)
+{
 
+	int gX = getX();
+	int gY = getY();
+
+	int pX = a->getX();
+	int pY = a->getY();
+
+	if (((pX >= gX - prox) && (pX <= gX + prox)) && ((pY >= gY - prox) && (pY <= gY + prox))) {
+		return true;
+	}
+	return false;
+}
+
+void Gold::doSomething()
+{
+	if (!isAlive())
+	{
+		setAliveStatus(false);
+		return;
+	}
+
+	if (!(isVisible()) && ProximityCheck(4, getWorld()->getPlayer()))
+	{
+		setVisible(true);
+		return;
+	}
+	else if (state == 1 && ProximityCheck(3, getWorld()->getPlayer()))
+	{
+		setAliveStatus(false);
+		getWorld()->playSound(SOUND_GOT_GOODIE);
+		getWorld()->increaseScore(10);
+		//add gold to inventory of Iceman
+	}
+
+	/*
+	else if (state == 0 && ProximityCheck(3, getWorld()->getPlayer())) //getProtestor?
+	{
+		setAliveStatus(false);
+		getWorld()->playSound(SOUND_PROTESTER_FOUND_GOLD);
+		//update the actions of the protester
+		//increase points 25
+	}
+	*/
+
+	if (state == 0)
+	{
+		if (delay > 0)
+			delay--;
+		else
+			setAliveStatus(false);
+	}
+}
 
 
 // Students:  Add code to this file (if you wish), Actor.h, StudentWorld.h, and StudentWorld.cpp
