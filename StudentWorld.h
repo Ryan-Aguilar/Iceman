@@ -33,13 +33,28 @@ public:
 	//returns true if there is ice at the location parameter
 
 	Iceman* getPlayer();
+	void addActor(Actor* a);
+	void setDisplayText();
+
+	int getOilLeft() const { return numOilLeft; }
+	void updateOilLeft(int o) { numOilLeft -= o; };
+
+	int getSonarLeft() const { return numSonarLeft; }  // ryan made the getter and setter function with same implementation that
+	                                                   // Andrew designed. Only thing done is I changed variable and name.
+	int SonarLifeSpan();
+	int chance();
+
+	int countsonar(int x);
+	void updateSonarLeft(int o);
+
 
 	~StudentWorld();
 private:
 	std::vector<Actor*> actors; // part A
 	Iceman* p1;
-	Ice* iceField[64][64];
-
+	Ice* iceField[64][64]{ nullptr };
+	int numOilLeft;
+	int numSonarLeft;
 };
 
 #endif // STUDENTWORLD_H_
