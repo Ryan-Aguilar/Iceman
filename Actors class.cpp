@@ -39,7 +39,7 @@ void Actor::setAliveStatus(bool status)
 
 Iceman::Iceman(int startX, int startY, Direction startDirection, StudentWorld* world, float size = 1.0, unsigned int depth = 0) :
 	Actor(IID_PLAYER, 30, 60, startDirection, world, size, depth), i_health(10), i_squirt(5), i_sonarCharge(1),
-	i_gold_sack(0), i_facing(right), i_points(0) {}
+	i_gold_sack(0), i_facing(right) {}
 
 bool Iceman::isAlive()
 {
@@ -140,20 +140,46 @@ void Iceman::doSomething()
 			setDirection(down);
 			this->moveTo(getX(), getY() - 1); break;
 		case 'z':
-
+			if (i_gold_sack == 0) break;
 			getWorld()->addActor(new Gold(icemanX, icemanY, getWorld(), 0));
+			addGold(-1);  break;
 		case 'Z':
-			getWorld()->addActor(new Gold(icemanY, icemanY, getWorld(), 0));
+			if (i_gold_sack == 0) break;
+			getWorld()->addActor(new Gold(icemanX, icemanY, getWorld(), 0));
+			addGold(-1);  break;
 		}
-
 	}
 
 }
 
-
-int Iceman::AccumulatePoints(int points)
+int Iceman::getHealth() const
 {
-	return i_points += points;
+	return i_health;
+}
+int Iceman::getNumGold() const
+{
+	return i_gold_sack;
+}
+int Iceman::getNumSquirt() const
+{
+	return i_squirt;
+}
+int Iceman::getNumSonar() const
+{
+	return i_sonarCharge;
+}
+
+void Iceman::addGold(int g)
+{
+	i_gold_sack += g;
+}
+void Iceman::addSonar(int s)
+{
+	i_sonarCharge += s;
+}
+void Iceman::addWtr(int w)
+{
+	i_squirt += w;
 }
 
 //--------------------------------------------------------Boulder-----------------------------------------------------------------------------
@@ -164,6 +190,12 @@ int Iceman::AccumulatePoints(int points)
 
 void Boulder::drop()
 {
+	if (delay > 0)
+	{
+		delay--;
+		return;
+	}
+
 	Iceman* player = getWorld()->getPlayer();
 
 	int bX = getX();
@@ -232,13 +264,10 @@ void Boulder::doSomething()
 
 }
 
+
 //-------------------------------------------------------Oil Barrel-------------------------------------------------------------
 
 
-bool Oil_Barrel::isAlive()
-{
-	return Alive;
-}
 
 void Oil_Barrel::ProximityCheck()
 {
@@ -250,37 +279,9 @@ void Oil_Barrel::ProximityCheck()
 	int pX = player->getX();
 	int pY = player->getY();
 
-	/*for (int x1 = oX; x1 < oX + 4; x1++)
-	{
-		for (int x2 = pX; x2 < pX + 4; x2++)
-		{
-			if (x1 == x2 && oY == (pY + 3))
-			{
-				setVisible(true);
-				return;
-			}
-		}
-	}*/
-
-
-	//for (int Oil_X = oX; oX < oX + 4; oX++) // up,down, left and right
-	//{
-
-	//}
-	//for (int Oil_X = oX; oX > oX - 4 && oX < oX; oX++)
-	//{
-
-	//}
-
-
-	//if (((oX - 4 >= pX) && (pX <= oX + 4)) && ((oY - 4 >= pY) && (pY <= oY + 4))) {
-		//setVisible(true);
-	//}
-
-	if (((pX >= oX - 4 ) && (pX <= oX + 4)) && ((pY >= oY - 4 ) && (pY <= oY + 4))) {
+	if (((pX >= oX - 4) && (pX <= oX + 4)) && ((pY >= oY - 4) && (pY <= oY + 4))) {
 		setVisible(true);
 	}
-
 
 }
 
@@ -290,7 +291,7 @@ void Oil_Barrel::doSomething()
 	{
 		return;
 	}
-	
+
 	ProximityCheck();
 	EraseOil();
 
@@ -305,23 +306,20 @@ void Oil_Barrel::EraseOil()
 
 	int pX = player->getX();
 	int pY = player->getY();
-	
+
 	if (((pX >= oX - 3) && (pX <= oX + 3)) && ((pY >= oY - 3) && (pY <= oY + 3))) {
-		
-		Alive = false;
-		
+
+		setAliveStatus(false);
+
+		getWorld()->updateOilLeft(1);
+
 		getWorld()->playSound(SOUND_FOUND_OIL);
 		setVisible(false);
-		player->AccumulatePoints(1000);
 	}
 
-
-	/*if (((pX >= oX - 1) && (pX <= oX + 1)) && ((pY >= oY - 1) && (pY <= oY + 1))) {
-
-	}*/
-
 }
-//---------------------------------------------------------------Gold nugget
+
+//-------------------------------------------------------Gold Nugget--------------------------------------------------------------------------
 
 bool Gold::ProximityCheck(int prox, Actor* a)
 {
@@ -356,7 +354,7 @@ void Gold::doSomething()
 		setAliveStatus(false);
 		getWorld()->playSound(SOUND_GOT_GOODIE);
 		getWorld()->increaseScore(10);
-		//add gold to inventory of Iceman
+		getWorld()->getPlayer()->addGold(1);
 	}
 
 	/*
@@ -378,5 +376,65 @@ void Gold::doSomething()
 	}
 }
 
+
+//------------------------------------------------------------Sonar----------------------------------------------------------
+
+int Sonar::getspan()
+{
+	return getWorld()->SonarLifeSpan();
+}
+
+void Sonar::ProximityCheck()
+{
+	Iceman* player = getWorld()->getPlayer();
+
+	int oX = getX();
+	int oY = getY();
+
+	int pX = player->getX();
+	int pY = player->getY();
+
+	if (((pX >= oX - 3) && (pX <= oX + 3)) && ((pY >= oY - 3) && (pY <= oY + 3))) {
+
+		setAliveStatus(false);
+
+		getWorld()->updateSonarLeft(1);
+
+		getWorld()->playSound(SOUND_GOT_GOODIE);
+		setVisible(false);
+	}
+}
+
+
+void Sonar::doSomething() {
+	if (!isAlive())
+	{
+		return;
+	}
+
+	ProximityCheck();
+
+	if (state == 1)
+	{
+		if (delay > 0)
+			delay--;
+		else
+			setAliveStatus(true);
+	}
+
+
+}
+
+//Protester::Protester(int imageID, int startX, int startY, Direction startDirection, float size = 1.0, unsigned int depth = 0):
+//	Actor(imageID, startX, startY, startDirection, size, depth) {
+//
+//}
+//
+//HardcoreProtester::HardcoreProtester(int imageID, int startX, int startY, Direction startDirection, float size = 1.0, unsigned int depth = 0) :
+//	Actor(imageID, startX, startY, startDirection, size, depth) {
+//
+//}
+
+// thee is still more to declare such as ice, boulders, etc...
 
 // Students:  Add code to this file (if you wish), Actor.h, StudentWorld.h, and StudentWorld.cpp
