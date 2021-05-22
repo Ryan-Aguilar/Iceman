@@ -9,11 +9,18 @@ GameWorld* createStudentWorld(string assetDir)
 	return new StudentWorld(assetDir);
 }
 
+
+int StudentWorld::SonarLifeSpan()
+{
+	return max(100, 300 - 10 * (int)getLevel());
+}
+
 int StudentWorld::init()
 {
 	//Create the player character - Iceman
-	p1 = new Iceman(30, 60, GraphObject::Direction::right, this, 1, 0); // the iceman
+	p1 = new Iceman(30, 60, GraphObject::Direction::right, this, 1, 0);
 
+	
 	//create an ice field
 	int rows = 64;
 	int columns = 64;
@@ -40,15 +47,16 @@ int StudentWorld::init()
 	int numBoulders = min(((int)getLevel() / 2) + 2, 9);
 	int numGold = max((5 - (int)getLevel()) / 2, 2);
 	int numOil = min((2 + (int)getLevel()), 21);
+	numOilLeft = numOil;
+	int numSon = 1;//max(100, 300 - 10 * (int)getLevel());
 
-	for (int i = 0; i < numBoulders; i++)
+	for (int i = 0; i < numBoulders; i++) //add boulders
 	{
 		int tempX{};
 		int tempY{};
 		tempX = rand() % 60;
 		tempY = rand() % 40 + 16;
 
-		actors.push_back(new Oil_Barrel(20,60, this)); // should be tempX and tempY
 		actors.push_back(new Boulder(tempX, tempY, this));
 
 		for (int x = tempX; x < tempX + 4; x++)
@@ -62,18 +70,67 @@ int StudentWorld::init()
 			}
 		}
 	}
-	for (int i = 0; i < numGold; i++)
+	for (int i = 0; i < numGold; i++) // add gold
 	{
+		int tempX{};
+		int tempY{};
+		tempX = rand() % 60;
+		tempY = rand() % 60;
+
+		actors.push_back(new Oil_Barrel(tempX, tempY, this));
 
 	}
-	for (int i = 0; i < numOil; i++)
+	for (int i = 0; i < numOil; i++) // add oil
 	{
+		int tempX{};
+		int tempY{};
+		tempX = rand() % 60;
+		tempY = rand() % 60;
 
+		actors.push_back(new Gold(tempX, tempY, this, 1));
 	}
+	
 
-	//actors.push_back(new Boulder(50, 56, this));
+	// -------------------------sonar spawn below---------------------------
+	/*
+	here there is no specific amount of sonars that will spawn. it is all based up chance. which is determined below.
+	
+	*/
 
 	return GWSTATUS_CONTINUE_GAME;
+}
+
+int StudentWorld::chance() {
+	return getLevel() * 25 + 300;
+}
+/*
+
+int tick = 30;
+
+for (int x =0; x<tick; x++)
+{
+}
+*/
+
+//WORK IN PROGRESS
+void StudentWorld::setDisplayText()
+{
+	int level = getLevel() + 1;
+	int lives = getLives();
+	int health = p1->getHealth();
+	int squirts = p1->getNumSquirt();
+	int gold = p1->getNumGold();
+	int barrelsLeft = numOilLeft;
+	int sonar = p1->getNumSonar();
+	int score = getScore();
+
+
+
+	string newDisplay = (string("Lvl: ") + to_string(level) + string(" Lives: ") + to_string(lives) + string(" Hlth: ") + to_string(health * 10) + "% "
+		+ string(" Wtr: ") + to_string(squirts) + string(" Gld: ") + to_string(gold) + string(" Oil Left: ") + to_string(barrelsLeft)
+		+ string(" Sonar: ") + to_string(sonar) + string(" Score: ") + to_string(score));
+
+	setGameStatText(newDisplay);
 }
 
 int StudentWorld::move()
@@ -81,18 +138,23 @@ int StudentWorld::move()
 	// This code is here merely to allow the game to build, run, and terminate after you hit enter a few times.
 	// Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
 
-	setGameStatText("Lvl: 52 Lives: 3 Hlth: 80% Wtr: 20 Gld: 3 Oil Left: 2 Sonar: 1 Scr: 321000 tick: ");
+	setDisplayText();
 
 	if (!(p1->isAlive()))
 	{
+		decLives();
 		playSound(SOUND_PLAYER_GIVE_UP);
 		return GWSTATUS_PLAYER_DIED;
 	}
-	//check which actors are dead and remove them from the game
-	for (auto a : actors)
+	else if (getOilLeft() == 0)
 	{
-
+		playSound(SOUND_FINISHED_LEVEL);
+		return GWSTATUS_FINISHED_LEVEL;
 	}
+
+
+	////check which actors are dead and remove them from the game
+	actors.erase(remove_if(actors.begin(), actors.end(), [](auto a) {return !(a->isAlive()); }), actors.end());
 
 	p1->doSomething();
 
@@ -101,7 +163,32 @@ int StudentWorld::move()
 		a->doSomething();
 	}
 
-	decLives();
+
+	// testing
+
+	int g = chance();
+	int spawn = rand() % (g + 1);
+
+	/*
+	limit the number of sonars that can be in the map. so make a function that counts the total number of sonars on the map
+
+	1 sonar at time.
+
+	
+
+	
+	*/
+	if (spawn == g && countsonar() == 0 ) {
+
+		int tempX = 0;
+		int tempY = 60;
+
+		actors.push_back(new Sonar(tempX, tempY, this, 1));
+		countsonar(1);
+
+	}
+
+
 	return GWSTATUS_CONTINUE_GAME; //return GWSTATUS_PLAYER_DIED;
 }
 
@@ -147,6 +234,11 @@ Iceman* StudentWorld::getPlayer()
 	return p1;
 }
 
+void StudentWorld::addActor(Actor* a)
+{
+	actors.push_back(a);
+}
+
 StudentWorld::~StudentWorld()
 {
 	delete p1; //delete the Iceman
@@ -165,4 +257,19 @@ StudentWorld::~StudentWorld()
 		}
 	}
 }
+
+
+void StudentWorld::updateSonarLeft(int o)
+{
+	if (o < 0)
+	{
+		numSonarLeft -= o;
+	}
+	else 
+	{
+		numSonarLeft += o;
+	}
+}
+
+
 // Students:  Add code to this file (if you wish), StudentWorld.h, Actor.h and Actor.cpp
