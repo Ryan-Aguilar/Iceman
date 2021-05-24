@@ -152,11 +152,16 @@ void Iceman::doSomething()
 			getWorld()->addActor(new Gold(icemanX, icemanY, getWorld(), 0));
 			addGold(-1);  break;
 		case 'r':
-			if (i_sonarCharge == 0) break;
-			if (i_sonarCharge > 0)
-			{
+			getWorld()->playSound(SOUND_SONAR);
+			break;
+		case 'R':
+			getWorld()->call();
+			getWorld()->playSound(SOUND_SONAR);
+			break;
+			//if (i_sonarCharge == 0) break;
+			
 
-			}
+			
 
 			/*
 			
@@ -342,9 +347,10 @@ void Oil_Barrel::doSomething()
 	EraseOil();
 
 	int ch;
-	if (getWorld()->getKey(ch) == true && ch == 'r')
+	if (getWorld()->getKey(ch) == true && ch == 'R')
 	{
 		search();
+
 	}
 
 }
