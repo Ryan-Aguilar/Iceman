@@ -15,6 +15,10 @@ public:
 	StudentWorld* getWorld() const;
 	virtual bool isAlive();
 	virtual void setAliveStatus(bool status);
+
+	virtual void search();
+
+
 	virtual ~Actor() {};
 private:
 	StudentWorld* sw;
@@ -40,6 +44,8 @@ public:
 
 	int getNumSonar() const;
 	void addSonar(int s);
+
+
 
 private:
 	int i_health;
@@ -88,6 +94,7 @@ public:
 		setVisible(false);
 	}
 
+	void search();
 	void doSomething();
 	void ProximityCheck();
 	void EraseOil();
@@ -113,6 +120,8 @@ public:
 
 		setAliveStatus(true);
 	}
+	
+	void search();
 
 	void doSomething();
 	bool ProximityCheck(int prox, Actor* a);
@@ -126,7 +135,7 @@ class Sonar : public Actor {
 public:
 
 	Sonar(int x, int y, StudentWorld* world, int s) :
-		Actor(IID_SONAR, x, y, right, world, 1.0, 2), state(s), delay(elapse) {
+		Actor(IID_SONAR, x, y, right, world, 1.0, 2), state(s), delay(getspan()) {
 		setVisible(true);
 		setAliveStatus(true);
 
@@ -144,10 +153,11 @@ public:
 	void doSomething();
 	void ProximityCheck();
 	int getspan();
+	void sonarScan();
 private:
 	int state; // 1 alive, 0 dead
 	int delay;
-	int elapse = getspan(); // this allows the sonar to stay on the map for a certain amount of time and then will vanish after it has expired
+	//int elapse = getspan(); // this allows the sonar to stay on the map for a certain amount of time and then will vanish after it has expired
 
 };
 
