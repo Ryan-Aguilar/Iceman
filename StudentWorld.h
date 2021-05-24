@@ -44,6 +44,9 @@ public:
 	int SonarLifeSpan();
 	int chance();
 
+	void call();
+
+
 	int countsonar(int x);
 	void updateSonarLeft(int o);
 
