@@ -13,7 +13,14 @@ int StudentWorld::countsonar(int x) {
 	return numSonarLeft += x;
 }
 
+void StudentWorld::call()
+{
+	for (auto z : actors)
+	{
+		z->search();
+	}
 
+}
 
 int StudentWorld::SonarLifeSpan()
 {
