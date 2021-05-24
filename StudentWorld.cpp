@@ -9,6 +9,11 @@ GameWorld* createStudentWorld(string assetDir)
 	return new StudentWorld(assetDir);
 }
 
+int StudentWorld::countsonar(int x) {
+	return numSonarLeft += x;
+}
+
+
 
 int StudentWorld::SonarLifeSpan()
 {
@@ -48,7 +53,7 @@ int StudentWorld::init()
 	int numGold = max((5 - (int)getLevel()) / 2, 2);
 	int numOil = min((2 + (int)getLevel()), 21);
 	numOilLeft = numOil;
-	int numSon = 1;//max(100, 300 - 10 * (int)getLevel());
+	//int numSon = 1;//max(100, 300 - 10 * (int)getLevel());
 
 	for (int i = 0; i < numBoulders; i++) //add boulders
 	{
@@ -173,18 +178,17 @@ int StudentWorld::move()
 	limit the number of sonars that can be in the map. so make a function that counts the total number of sonars on the map
 
 	1 sonar at time.
-
-	
-
 	
 	*/
-	if (spawn == g && countsonar() == 0 ) {
 
-		int tempX = 0;
-		int tempY = 60;
-
-		actors.push_back(new Sonar(tempX, tempY, this, 1));
-		countsonar(1);
+	if (spawn == g ) 
+	{
+		if (numSonarLeft == 0) 
+		{
+			actors.push_back(new Sonar(0, 60, this, 1));
+			countsonar(1);
+			
+		}
 
 	}
 
@@ -270,6 +274,8 @@ void StudentWorld::updateSonarLeft(int o)
 		numSonarLeft += o;
 	}
 }
+
+
 
 
 // Students:  Add code to this file (if you wish), StudentWorld.h, Actor.h and Actor.cpp
