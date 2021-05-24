@@ -16,6 +16,9 @@ GraphObject(imageID, startX, startY, startDirection, size, depth), sw(world)  //
 	setVisible(true);
 }
 
+void Actor:: search()
+{}
+
 StudentWorld* Actor::getWorld() const
 {
 	return sw;
@@ -45,6 +48,7 @@ bool Iceman::isAlive()
 {
 	return i_health > 0;
 }
+
 
 void Iceman::damage(int damage)
 {
@@ -147,6 +151,32 @@ void Iceman::doSomething()
 			if (i_gold_sack == 0) break;
 			getWorld()->addActor(new Gold(icemanX, icemanY, getWorld(), 0));
 			addGold(-1);  break;
+		case 'r':
+			if (i_sonarCharge == 0) break;
+			if (i_sonarCharge > 0)
+			{
+
+			}
+
+			/*
+			
+			you have to get the location of multiple oil barrels and chrck if it is in the radius of 12 blocks.
+
+			how will you scan?
+
+			i only have an icefield, but that doesn't say there is ice at this spot at such and such x,y coordinate. so its not like i can access it throgh the icefield 2d array.
+
+			i cannot put one singular pointer because later on there is multiple that can be close. so one would be shown and the rest wouldn't.
+
+			i have no way to tell where those actors are at.
+
+			i know it is stored in a vector.......................
+
+			but i can check the array and access every actor in the array and get their x and y location and if they are close to the radius of the ice man, then we can set visible
+			true
+			
+			*/
+
 		}
 	}
 
@@ -268,6 +298,22 @@ void Boulder::doSomething()
 //-------------------------------------------------------Oil Barrel-------------------------------------------------------------
 
 
+void Oil_Barrel::search() 
+{
+	Iceman* player = getWorld()->getPlayer();
+
+	int oX = getX();
+	int oY = getY();
+
+	int pX = player->getX();
+	int pY = player->getY();
+
+	if (((pX >= oX - 12) && (pX <= oX + 12)) && ((pY >= oY - 12) && (pY <= oY + 12))) {
+		setVisible(true);
+	}
+}
+
+
 
 void Oil_Barrel::ProximityCheck()
 {
@@ -295,6 +341,12 @@ void Oil_Barrel::doSomething()
 	ProximityCheck();
 	EraseOil();
 
+	int ch;
+	if (getWorld()->getKey(ch) == true && ch == 'r')
+	{
+		search();
+	}
+
 }
 
 void Oil_Barrel::EraseOil()
@@ -320,6 +372,23 @@ void Oil_Barrel::EraseOil()
 }
 
 //-------------------------------------------------------Gold Nugget--------------------------------------------------------------------------
+
+
+void Gold::search()
+{
+	Iceman* player = getWorld()->getPlayer();
+
+	int gX = getX();
+	int gY = getY();
+
+	int pX = player->getX();
+	int pY = player->getY();
+
+	if (((pX >= gX - 12) && (pX <= gX + 12)) && ((pY >= gY - 12) && (pY <= gY + 12))) {
+		setVisible(true);
+	}
+}
+
 
 bool Gold::ProximityCheck(int prox, Actor* a)
 {
@@ -367,6 +436,13 @@ void Gold::doSomething()
 	}
 	*/
 
+	int ch;
+	if (getWorld()->getKey(ch) == true && ch == 'r')
+	{
+		search();
+	}
+
+
 	if (state == 0)
 	{
 		if (delay > 0)
@@ -378,6 +454,21 @@ void Gold::doSomething()
 
 
 //------------------------------------------------------------Sonar----------------------------------------------------------
+
+void Sonar::sonarScan()
+{
+	Iceman* player = getWorld()->getPlayer();
+
+	int oX = getX();
+	int oY = getY();
+
+	int pX = player->getX();
+	int pY = player->getY();
+	if (((pX >= oX - 12) && (pX <= oX + 12)) && ((pY >= oY - 12) && (pY <= oY + 12)))
+	{
+		setVisible(true);
+	}
+}
 
 int Sonar::getspan()
 {
@@ -402,6 +493,7 @@ void Sonar::ProximityCheck()
 
 		getWorld()->playSound(SOUND_GOT_GOODIE);
 		setVisible(false);
+		getWorld()->countsonar(-1);
 	}
 }
 
@@ -417,9 +509,15 @@ void Sonar::doSomething() {
 	if (state == 1)
 	{
 		if (delay > 0)
+		{
 			delay--;
-		else
-			setAliveStatus(true);
+		}
+		else if (delay == 0) 
+		{
+			state = 0;
+			setAliveStatus(false);
+			getWorld()->countsonar(-1);
+		}
 	}
 
 
