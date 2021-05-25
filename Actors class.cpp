@@ -144,19 +144,19 @@ void Iceman::doSomething()
 			setDirection(down);
 			this->moveTo(getX(), getY() - 1); break;
 		case 'z':
-			if (i_gold_sack == 0) break;
-			getWorld()->addActor(new Gold(icemanX, icemanY, getWorld(), 0));
-			addGold(-1);  break;
 		case 'Z':
-			if (i_gold_sack == 0) break;
-			getWorld()->addActor(new Gold(icemanX, icemanY, getWorld(), 0));
-			addGold(-1);  break;
-		case 'r':
-			getWorld()->playSound(SOUND_SONAR);
-			break;
-		case 'R':
+			if(charge > 0)
+			{  
 			getWorld()->call();
 			getWorld()->playSound(SOUND_SONAR);
+			}
+		/*	if (i_gold_sack == 0) break;
+			getWorld()->addActor(new Gold(icemanX, icemanY, getWorld(), 0));
+			addGold(-1);  break;*/
+	/*	case 'r':
+		case 'R':
+			getWorld()->call();
+			getWorld()->playSound(SOUND_SONAR);*/
 			break;
 			//if (i_sonarCharge == 0) break;
 			
@@ -346,12 +346,6 @@ void Oil_Barrel::doSomething()
 	ProximityCheck();
 	EraseOil();
 
-	int ch;
-	if (getWorld()->getKey(ch) == true && ch == 'R')
-	{
-		search();
-
-	}
 
 }
 
@@ -442,12 +436,6 @@ void Gold::doSomething()
 	}
 	*/
 
-	int ch;
-	if (getWorld()->getKey(ch) == true && ch == 'r')
-	{
-		search();
-	}
-
 
 	if (state == 0)
 	{
@@ -495,13 +483,12 @@ void Sonar::ProximityCheck()
 
 		setAliveStatus(false);
 
-		getWorld()->updateSonarLeft(1);
-
 		getWorld()->playSound(SOUND_GOT_GOODIE);
 		setVisible(false);
 		getWorld()->countsonar(-1);
 	}
 }
+
 
 
 void Sonar::doSomething() {
