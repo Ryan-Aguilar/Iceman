@@ -73,7 +73,7 @@ void Iceman::doSomething()
 		}
 	}
 
-
+	
 	int ch;
 	if (getWorld()->getKey(ch) == true)
 	{
@@ -145,10 +145,16 @@ void Iceman::doSomething()
 			this->moveTo(getX(), getY() - 1); break;
 		case 'z':
 		case 'Z':
-			if(charge > 0)
+			if( i_sonarCharge >= 1) // come back to
 			{  
 			getWorld()->call();
 			getWorld()->playSound(SOUND_SONAR);
+			addSonar(-1);
+			}
+			else
+			{
+			break;
+
 			}
 		/*	if (i_gold_sack == 0) break;
 			getWorld()->addActor(new Gold(icemanX, icemanY, getWorld(), 0));
@@ -157,7 +163,6 @@ void Iceman::doSomething()
 		case 'R':
 			getWorld()->call();
 			getWorld()->playSound(SOUND_SONAR);*/
-			break;
 			//if (i_sonarCharge == 0) break;
 			
 
@@ -483,9 +488,11 @@ void Sonar::ProximityCheck()
 
 		setAliveStatus(false);
 
+
 		getWorld()->playSound(SOUND_GOT_GOODIE);
 		setVisible(false);
 		getWorld()->countsonar(-1);
+		player->addSonar(1);
 	}
 }
 
