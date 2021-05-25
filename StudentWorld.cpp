@@ -192,7 +192,7 @@ int StudentWorld::move()
 	{
 		if (numSonarLeft == 0) 
 		{
-			actors.push_back(new Sonar(0, 60, this, 1));
+			actors.push_back(new Sonar(0, 60, this, 1, 1));
 			countsonar(1);
 			
 		}
@@ -266,19 +266,6 @@ StudentWorld::~StudentWorld()
 			if (iceField[x][y] != nullptr)
 				delete iceField[x][y];
 		}
-	}
-}
-
-
-void StudentWorld::updateSonarLeft(int o)
-{
-	if (o < 0)
-	{
-		numSonarLeft -= o;
-	}
-	else 
-	{
-		numSonarLeft += o;
 	}
 }
 
