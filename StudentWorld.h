@@ -45,10 +45,7 @@ public:
 	int chance();
 
 	void call();
-
-
 	int countsonar(int x);
-
 	//void xray();
 
 	~StudentWorld();
@@ -58,6 +55,7 @@ private:
 	Ice* iceField[64][64]{ nullptr };
 	int numOilLeft;
 	int numSonarLeft;
+	Sonar* s;
 };
 
 #endif // STUDENTWORLD_H_
