@@ -48,7 +48,6 @@ public:
 
 
 	int countsonar(int x);
-	void updateSonarLeft(int o);
 
 	//void xray();
 
