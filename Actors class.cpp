@@ -533,6 +533,6 @@ void Sonar::doSomething() {
 //
 //}
 
-// thee is still more to declare such as ice, boulders, etc...
+// thee is still more to declare such as ice, boulders, etc... 
 
 // Students:  Add code to this file (if you wish), Actor.h, StudentWorld.h, and StudentWorld.cpp
