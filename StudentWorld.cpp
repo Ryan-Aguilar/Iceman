@@ -192,7 +192,8 @@ int StudentWorld::move()
 	{
 		if (numSonarLeft == 0) 
 		{
-			actors.push_back(new Sonar(0, 60, this, 1, 1));
+			s = new Sonar(0, 60, this, 1);
+			actors.push_back(s);
 			countsonar(1);
 			
 		}
@@ -268,8 +269,6 @@ StudentWorld::~StudentWorld()
 		}
 	}
 }
-
-
 
 
 // Students:  Add code to this file (if you wish), StudentWorld.h, Actor.h and Actor.cpp
