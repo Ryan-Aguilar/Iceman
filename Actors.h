@@ -134,8 +134,8 @@ private:
 class Sonar : public Actor {
 public:
 
-	Sonar(int x, int y, StudentWorld* world, int s, int c) :
-		Actor(IID_SONAR, x, y, right, world, 1.0, 2), state(s), delay(getspan()), charge(c) {
+	Sonar(int x, int y, StudentWorld* world, int s) :
+		Actor(IID_SONAR, x, y, right, world, 1.0, 2), state(s), delay(getspan()) {
 		setVisible(true);
 		setAliveStatus(true);
 
@@ -154,12 +154,10 @@ public:
 	void ProximityCheck();
 	int getspan();
 	void sonarScan();
-	int scansLeft(int x);
 
 private:
 	int state; // 1 alive, 0 dead
 	int delay;
-	int charge;
 	//int elapse = getspan(); // this allows the sonar to stay on the map for a certain amount of time and then will vanish after it has expired
 
 };
