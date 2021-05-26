@@ -19,11 +19,42 @@ public:
 	virtual void search();
 
 
+	//--------------------making damage a base class here for protesters and iceman ---------
+	virtual void damage();
+	//---------------------------------------------------------------------------------------
+
+
+
 	virtual ~Actor() {};
 private:
 	StudentWorld* sw;
 	bool alive;
 };
+
+
+//--------------------------------------------------------Regular Protester-----------------------------------------------------------------------------
+
+
+class Regular_protester : public Actor {
+public:
+	Regular_protester(int x, int y, StudentWorld* world):
+		Actor (IID_PROTESTER, x, y, left, world, 1.0, 0), delay(15), cooldown(1)
+	{
+		setVisible(true);
+	}
+	void damage(int damage); // this damage function right now is only intended to harm the iceman. so protesters hurt iceman
+
+	void coolDown();
+	void resetcoolDown(int x);
+
+	void doSomething();
+
+private:
+	int cooldown; // this is a state variable that will regulate the delay. this will trigger the delay. 1 its ready to shout. 2 its not ready to shoot.
+	int delay; // this is to make the protester wait 15 ticks so it can shout again.
+
+};
+
 
 //--------------------------------------------------------Iceman-----------------------------------------------------------------------------
 
@@ -44,7 +75,6 @@ public:
 
 	int getNumSonar() const;
 	void addSonar(int s);
-
 
 
 private:
@@ -153,12 +183,10 @@ public:
 	void doSomething();
 	void ProximityCheck();
 	int getspan();
-	void sonarScan();
 
 private:
 	int state; // 1 alive, 0 dead
 	int delay;
-	//int elapse = getspan(); // this allows the sonar to stay on the map for a certain amount of time and then will vanish after it has expired
 
 };
 
