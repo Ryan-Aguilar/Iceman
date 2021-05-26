@@ -20,7 +20,7 @@ public:
 
 
 	//--------------------making damage a base class here for protesters and iceman ---------
-	virtual void damage();
+	//virtual void damage();
 	//---------------------------------------------------------------------------------------
 
 
