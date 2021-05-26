@@ -222,6 +222,109 @@ void Iceman::addWtr(int w)
 	i_squirt += w;
 }
 
+
+
+//--------------------------------------------------------Regular_protesters-----------------------------------------------------------------
+
+
+void Regular_protester::damage(int damage)
+{
+	bool trigger = false;
+	Iceman* player = getWorld()->getPlayer();
+
+	int pX = getX();
+	int pY = getY();
+
+	int iX = player->getX();
+	int iY = player->getY();
+
+	if (cooldown == 1)
+	{ 
+			if (pX >= iX - 4) // checks left
+			{
+		
+				trigger = true;
+				if (trigger)
+				{
+					getWorld()->playSound(SOUND_PROTESTER_YELL);
+					player->damage(2);
+					return;
+				}
+			}
+			else if (pX <= iX + 4) // checks right
+			{
+				trigger = true;
+				if (trigger)
+				{
+					getWorld()->playSound(SOUND_PROTESTER_YELL);
+					player->damage(2);
+					return;
+				}
+			}
+			else if (pY >= iY - 4) // checks down
+			{
+				trigger = true;
+				if (trigger)
+				{
+					getWorld()->playSound(SOUND_PROTESTER_YELL);
+					player->damage(2);
+					return;
+				}
+			}
+			else if (pY <= iY + 4) // checks up
+			{
+				trigger = true;
+				if (trigger)
+				{
+					getWorld()->playSound(SOUND_PROTESTER_YELL);
+					player->damage(2);
+					return;
+				}
+			}
+	}
+	else if (cooldown == 0)
+	{
+		return;
+	}
+
+
+}
+
+void Regular_protester::resetcoolDown(int x)
+{
+	cooldown = +x;
+}
+
+void Regular_protester::coolDown()
+{
+	if (delay > 0)
+	{
+		delay--;
+		return;
+	}
+
+	if (delay == 0)
+	{
+		resetcoolDown(15);
+		return;
+	}
+}
+
+
+void Regular_protester::doSomething()
+{
+	if (!isAlive())
+	{
+		return;
+	}
+
+	if (cooldown == 1)
+	{
+		damage(2);
+	}
+
+}
+
 //--------------------------------------------------------Boulder-----------------------------------------------------------------------------
 
 
@@ -454,21 +557,6 @@ void Gold::doSomething()
 
 //------------------------------------------------------------Sonar----------------------------------------------------------
 
-void Sonar::sonarScan()
-{
-	Iceman* player = getWorld()->getPlayer();
-
-	int oX = getX();
-	int oY = getY();
-
-	int pX = player->getX();
-	int pY = player->getY();
-	if (((pX >= oX - 12) && (pX <= oX + 12)) && ((pY >= oY - 12) && (pY <= oY + 12)))
-	{
-		setVisible(true);
-	}
-}
-
 int Sonar::getspan()
 {
 	return getWorld()->SonarLifeSpan();
@@ -493,6 +581,7 @@ void Sonar::ProximityCheck()
 		setVisible(false);
 		getWorld()->countsonar(-1);
 		player->addSonar(1);
+		getWorld()->increaseScore(75);
 	}
 }
 
@@ -533,6 +622,6 @@ void Sonar::doSomething() {
 //
 //}
 
-// thee is still more to declare such as ice, boulders, etc... 
+// thee is still more to declare such as ice, boulders, etc...
 
 // Students:  Add code to this file (if you wish), Actor.h, StudentWorld.h, and StudentWorld.cpp
