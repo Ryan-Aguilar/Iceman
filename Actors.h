@@ -2,71 +2,70 @@
 #define ACTOR_H_
 
 #include "GraphObject.h"
+#include <string>
 
 class StudentWorld;
 
 //--------------------------------------------------------Actor-----------------------------------------------------------------------------
 
+//Actor is an abstract base class or a pure virtual class
+//We don't want to ever create an actor and we don't want it to be able to doSomething()
+//It is just used as an interface for all other game objects
+
 class Actor : public GraphObject {
 public:
 
 	Actor(int imageID, int startX, int startY, Direction startDirection, StudentWorld* world, float size, unsigned int depth);
-	virtual void doSomething() = 0;
+
+	//doSomething: What each actor does on each tick
+	virtual void doSomething() = 0; //pure virtual fcn
+
+	//Returns a pointer to the StudentWorld that is housing our game
+	//Used to access all actors in the game and to update the game map
 	StudentWorld* getWorld() const;
+
+	//Returns true if the given actor is alive (bool status alive, not health)
 	virtual bool isAlive();
-	virtual void setAliveStatus(bool status);
 
-	virtual void search();
+	//Updates the bool alive status of the given actor
+	virtual void setAliveStatus(bool newStatus);
 
+	virtual void damageintake(int x);
+	virtual std::string type();
 
-	//--------------------making damage a base class here for protesters and iceman ---------
-	//virtual void damage();
-	//---------------------------------------------------------------------------------------
+	//Given a proximity, this returns true if the actor 'a' is within the specified proximity, prox, of the given actor
+	virtual bool proximityCheck(int prox, Actor* a);
 
+	//Only implement in Gold and Oil, sets the oil or gold to visible if within 12 units of a sonar wave
+	virtual void sonarSearch() {/*Only does something for Oil and Gold*/ }
 
+	virtual void gotGold() {/*only implement for protesters*/ }
 
+	//Virtual Destructor
 	virtual ~Actor() {};
-private:
-	StudentWorld* sw;
-	bool alive;
-};
-
-
-//--------------------------------------------------------Regular Protester-----------------------------------------------------------------------------
-
-
-class Regular_protester : public Actor {
-public:
-	Regular_protester(int x, int y, StudentWorld* world):
-		Actor (IID_PROTESTER, x, y, left, world, 1.0, 0), delay(15), cooldown(1)
-	{
-		setVisible(true);
-	}
-	void damage(int damage); // this damage function right now is only intended to harm the iceman. so protesters hurt iceman
-
-	void coolDown();
-	void resetcoolDown(int x);
-
-	void doSomething();
 
 private:
-	int cooldown; // this is a state variable that will regulate the delay. this will trigger the delay. 1 its ready to shout. 2 its not ready to shoot.
-	int delay; // this is to make the protester wait 15 ticks so it can shout again.
+	StudentWorld* sw; //Game pointer
+	bool alive; //Alive status
 
 };
-
 
 //--------------------------------------------------------Iceman-----------------------------------------------------------------------------
 
 class Iceman : public Actor {
 public:
-	Iceman(int startX, int startY, Direction startDirection, StudentWorld* world, float size, unsigned int depth);
+	Iceman(StudentWorld* world) :
+		Actor(IID_PLAYER, 30, 60, right, world, 1.0, 0), i_health(10), i_squirt(500), i_sonarCharge(1),
+		i_gold_sack(0), i_facing(right) {}
+
 	void doSomething();
-	bool isAlive();
 
-	void damage(int damage);
-	int getHealth() const;
+	void damage(int damage); // updates the players health, subtracts damage parameter fromn health data member
+	int getHealth() const; // returns tje HP
 
+	std::string type();
+
+	//Getters and Setters for Iceman's Inventory
 	int getNumGold() const;
 	void addGold(int g);
 
@@ -75,7 +74,6 @@ public:
 
 	int getNumSonar() const;
 	void addSonar(int s);
-
 
 private:
 	int i_health;
@@ -96,14 +94,15 @@ public:
 
 //--------------------------------------------------------Boulder-----------------------------------------------------------------------------
 
-class Boulder :public Actor
+class Boulder : public Actor
 {
 public:
 	Boulder(int x, int y, StudentWorld* world) :
-		Actor(IID_BOULDER, x, y, down, world, 1, 1.0), delay(30) {
+		Actor(IID_BOULDER, x, y, down, world, 1.0, 1), delay(30) {
 		setVisible(true);
 	}
 
+	std::string type();
 	void doSomething();
 	void drop();
 
@@ -121,13 +120,12 @@ class Oil_Barrel : public Actor
 public:
 	Oil_Barrel(int x, int y, StudentWorld* world) :
 		Actor(IID_BARREL, x, y, right, world, 1.0, 2) {
-		setVisible(false);
+		setVisible(true);
 	}
 
-	void search();
+	std::string type();
 	void doSomething();
-	void ProximityCheck();
-	void EraseOil();
+	void sonarSearch();
 
 	// barrel needs to reward player a.k.a iceman 1000 points for picking up oil.
 private:
@@ -142,7 +140,7 @@ class Gold : public Actor
 {
 public:
 	Gold(int x, int y, StudentWorld* world, int s) :
-		Actor(IID_GOLD, x, y, right, world, 1.0, 2), state(s), delay(30) {
+		Actor(IID_GOLD, x, y, right, world, 1.0, 2), state(s), delay(100) {
 		if (state == 1)
 			setVisible(false);
 		else if (state == 0)
@@ -150,47 +148,121 @@ public:
 
 		setAliveStatus(true);
 	}
-	
-	void search();
 
+	std::string type();
 	void doSomething();
-	bool ProximityCheck(int prox, Actor* a);
+	void sonarSearch();
 
 private:
 	int state; // 0 - dropped 1 - spawned
 	int delay;
 };
 
+
+//-------------------------------------------------------Water--------------------------------------------------------------------------
+
+class Water : public Actor
+{
+public:
+	Water(int x, int y, StudentWorld* world);
+
+	std::string type();
+	void doSomething();
+
+private:
+	int delay;
+};
+
+
+
+//-------------------------------------------------------Squirt--------------------------------------------------------------------------
+class Squirt : public Actor
+{
+public:
+	Squirt(int x, int y, StudentWorld* world);
+	void doSomething();
+	int hitRegulator(int x);
+	std::string type();
+	void damage();
+
+private:
+	int distanceLeft;
+	int hit;
+};
+
+
+//-------------------------------------------------------Sonar--------------------------------------------------------------------------
+
+
 class Sonar : public Actor {
 public:
 
-	Sonar(int x, int y, StudentWorld* world, int s) :
-		Actor(IID_SONAR, x, y, right, world, 1.0, 2), state(s), delay(getspan()) {
-		setVisible(true);
-		setAliveStatus(true);
+	Sonar(int x, int y, StudentWorld* world);
 
-		/*
-		this is not correct. come back to or it is currently under investigation.
-
-		problem is that the sonar kits are spawning right off the bat and they must not be that way.
-		they should only spawn atfer a 1 and g chance of ticks by the expression below:
-
-		int G = current_level_number * 25 + 300 found on page 21.
-		
-		*/
-	}
-	
+	std::string type();
 	void doSomething();
-	void ProximityCheck();
-	int getspan();
 
 private:
-	int state; // 1 alive, 0 dead
 	int delay;
+
+};
+
+//--------------------------------------------------------Regular Protester-----------------------------------------------------------------------------
+
+
+class Regular_protester : public Actor {
+public:
+	Regular_protester(int x, int y, StudentWorld* world);
+
+
+	void damage(int damage); // this damage function right now is only intended to harm the iceman. so protesters hurt iceman
+
+	void coolDown();
+	void resetcoolDown(int x);
+
+	void p_move(); //might use, might not, who knows
+	void changeDir();
+
+	void gotGold();
+
+	void damageintake(int x);
+	std::string type();
+	void doSomething();
+
+
+
+private:
+	int state; // 0 - dead , 1 - alive, 2 - waiting
+	int cooldown; // this is a state variable that will regulate the delay. this will trigger the delay. 1 its ready to shout. 2 its not ready to shoot.
+	int delay; // this is to make the protester wait 15 ticks so it can shout again.
+	int restDelay; //delay between moves
+	int p_health;
+	int numStepsLeft;
+	int ticks; //checks for 200 ticks pass
+};
+//--------------------------------------------------HardCore Protester---------------------------------------
+
+class hardcoreprotester : public Actor {
+public:
+	hardcoreprotester(int x, int y, StudentWorld* world);
+
+	void damageintake(int x);
+
+	void damage();
+
+	void doSomething();
+
+private:
+	int hitpoints;
+	int cooldown;
+	int delay;
+
+
 
 };
 
 
 
-
 #endif
+
+
