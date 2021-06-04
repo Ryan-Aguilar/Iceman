@@ -61,11 +61,6 @@ bool Actor::proximityCheck(int prox, Actor* a)
 //--------------------------------------------------------Iceman-----------------------------------------------------------------------------
 
 
-//bool Iceman::isAlive()
-//{
-//	return i_health > 0;
-//}
-
 void Iceman::damage(int damage)
 {
 	i_health -= damage;
@@ -107,6 +102,7 @@ void Iceman::doSomething()
 		case 'D':
 		case 6:
 			if (getX() == 60) break;
+			if (getWorld()->checkActor(getX() + 1, getY()) == "Boulder") break;
 			setDirection(right);
 			this->moveTo(getX() + 1, getY()); break;
 		case KEY_PRESS_LEFT: //move left
@@ -114,6 +110,7 @@ void Iceman::doSomething()
 		case 'A':
 		case 4:
 			if (getX() == 0) break;
+			if (getWorld()->checkActor(getX() - 1, getY()) == "Boulder") break;
 			setDirection(left);
 			this->moveTo(getX() - 1, getY()); break;
 		case KEY_PRESS_UP: //move up
@@ -121,6 +118,7 @@ void Iceman::doSomething()
 		case 'W':
 		case 8:
 			if (getY() == 60) break;
+			if (getWorld()->checkActor(getX(), getY() + 1) == "Boulder") break;
 			setDirection(up);
 			this->moveTo(getX(), getY() + 1); break;
 		case KEY_PRESS_DOWN: //move down
@@ -128,6 +126,7 @@ void Iceman::doSomething()
 		case 'S':
 		case 2:
 			if (getY() == 0) break;
+			if (getWorld()->checkActor(getX(), getY() - 1) == "Boulder") break;
 			setDirection(down);
 			this->moveTo(getX(), getY() - 1); break;
 
@@ -138,13 +137,25 @@ void Iceman::doSomething()
 		case ' ': //squirt water
 			if (i_squirt == 0) break;
 			if (getDirection() == right)
-				getWorld()->addActor(new Squirt(icemanX + 1, icemanY, getWorld()));
+			{
+				getWorld()->playSound(SOUND_PLAYER_SQUIRT);
+				getWorld()->addActor(new Squirt(icemanX + 4, icemanY, getWorld()));
+			}
 			else if (getDirection() == left)
+			{
+				getWorld()->playSound(SOUND_PLAYER_SQUIRT);
 				getWorld()->addActor(new Squirt(icemanX - 1, icemanY, getWorld()));
+			}
 			else if (getDirection() == up)
-				getWorld()->addActor(new Squirt(icemanX, icemanY + 1, getWorld()));
+			{
+				getWorld()->playSound(SOUND_PLAYER_SQUIRT);
+				getWorld()->addActor(new Squirt(icemanX, icemanY + 4, getWorld()));
+			}
 			else if (getDirection() == down)
+			{
+				getWorld()->playSound(SOUND_PLAYER_SQUIRT);
 				getWorld()->addActor(new Squirt(icemanX, icemanY - 1, getWorld()));
+			}
 			addWtr(-1);  break;
 		case 'z':
 		case 'Z': //sonar charge
@@ -202,6 +213,11 @@ void Boulder::drop()
 		delay--;
 		return;
 	}
+	if (delay == 0 && time == 0)
+	{
+		getWorld()->playSound(SOUND_FALLING_ROCK);
+		time++;
+	}
 
 	Iceman* player = getWorld()->getPlayer();
 
@@ -227,14 +243,14 @@ void Boulder::drop()
 				setAliveStatus(false);
 			}
 
-			// if it comes into contact with protestor, cause 100 damage and keep falling
+			// if it comes into contact with protestor, cause 100 damage and keep falling 
 		}
 	}
 
-	std::string p = "RegularProtester";
-	getWorld()->damagecall(type(), p, getX(), getY());
+	std::string p = "Protester";
+	getWorld()->damagecall(this, p, getX(), getY());
 
-	getWorld()->playSound(SOUND_FALLING_ROCK);
+	//	getWorld()->playSound(SOUND_FALLING_ROCK);
 	this->moveTo(getX(), getY() - 1);
 }
 
@@ -244,7 +260,9 @@ void Boulder::doSomething()
 	int bY = getY();
 
 	if (bY == 0)
+	{
 		setAliveStatus(false);
+	}
 
 	if (!isAlive())
 	{
@@ -270,7 +288,9 @@ void Boulder::doSomething()
 	}
 
 	if (canDrop)
+	{
 		drop();
+	}
 
 }
 
@@ -447,11 +467,10 @@ void Squirt::damage()
 	int sx = getX();
 	int sy = getY();
 
-	std::string protester = "RegularProtester";
-	std::string hardcore = "Hardcore";
+	std::string protester = "Protester";
 
 
-	getWorld()->damagecall(type(), protester, sx, sy);
+	getWorld()->damagecall(this, protester, sx, sy);
 
 	return;
 
@@ -474,7 +493,7 @@ void Squirt::doSomething()
 	}
 
 
-	if (distanceLeft == 0) setAliveStatus(false);
+	if (distanceLeft == 0 || getWorld()->checkActor(getX(), getY()) == "Boulder") setAliveStatus(false);
 	else
 	{
 		int sX = getX(), sY = getY();
@@ -558,40 +577,49 @@ void Sonar::doSomething() {
 
 }
 
+//--------------------------------------------------------Protester-----------------------------------------------------------------------------
 
-//--------------------------------------------------------Regular_protesters-----------------------------------------------------------------
-Regular_protester::Regular_protester(int x, int y, StudentWorld* world) :
-	Actor(IID_PROTESTER, x, y, left, world, 1.0, 0), delay(0), cooldown(1), p_health(5), state(1), numStepsLeft(10), ticks(200)
+
+Protester::Protester(int imageID, int x, int y, Direction d, float size, unsigned int depth, StudentWorld* world, int hlth) :
+	Actor(imageID, x, y, d, world, size, depth), delay(0), cooldown(1), p_health(hlth), state(1), numStepsLeft(10), ticks(200)
 {
 	setVisible(true);
 	int tickDelay = std::max(0, (3 - (int)getWorld()->getLevel()) / 4);
 }
 
-std::string Regular_protester::type()
+
+
+std::string Protester::type()
 {
-	std::string x = "RegularProtester";
+	std::string x = "Protester";
 	return x;
 }
 
-void Regular_protester::damageintake(int x)
+void Protester::damageintake(int x)
 {
 	p_health -= x;
+
 	if (p_health < 0)
 	{
 		getWorld()->playSound(SOUND_PROTESTER_GIVE_UP);
+		getWorld()->increaseScore(100);
 		state = 0;
+		return;
 	}
-
+	else
+	{
+		int rest = std::max(50, 100 - (int)getWorld()->getLevel() * 10);
+		restDelay = rest;
+		state = 2;
+	}
 }
 
-void Regular_protester::damage(int damage)
+void Protester::damage(int damage)
 {
 	bool trigger = false;
 	Iceman* player = getWorld()->getPlayer();
-
 	int pX = getX();
 	int pY = getY();
-
 	int iX = player->getX();
 	int iY = player->getY();
 
@@ -651,40 +679,20 @@ void Regular_protester::damage(int damage)
 
 }
 
-//void Regular_protester::resetcoolDown(int x)
-//{
-//	delay += x;
-//	cooldown = 1;
-//}
-//
-//void Regular_protester::coolDown()
-//{
-//	if (delay > 0)
-//	{
-//		delay--;
-//		return;
-//	}
-//
-//	if (delay == 0)
-//	{
-//		resetcoolDown(15);
-//		cooldown = 1;
-//		return;
-//	}
-//}
-
-void Regular_protester::gotGold()
+void Protester::gotGold()
 {
 	state = 0;
+	getWorld()->increaseScore(25);
+	getWorld()->playSound(SOUND_PROTESTER_FOUND_GOLD);
 }
 
-void Regular_protester::p_move()
+void Protester::p_move()
 {
 
 	if (getDirection() == right && getX() < 60)
 	{
 		if (!getWorld()->checkIce(getX() + 4, getY()) && !getWorld()->checkIce(getX() + 4, getY() + 1)
-			&& !getWorld()->checkIce(getX() + 4, getY() + 2) && !getWorld()->checkIce(getX() + 4, getY() + 3))
+			&& !getWorld()->checkIce(getX() + 4, getY() + 2) && !getWorld()->checkIce(getX() + 4, getY() + 3) && getWorld()->checkActor(getX() + 1, getY()) != "Boulder")
 		{
 			moveTo(getX() + 1, getY());
 		}
@@ -694,7 +702,7 @@ void Regular_protester::p_move()
 	else if (getDirection() == left && getX() > 0)
 	{
 		if (!getWorld()->checkIce(getX() - 1, getY()) && !getWorld()->checkIce(getX() - 1, getY() + 1)
-			&& !getWorld()->checkIce(getX() - 1, getY() + 2) && !getWorld()->checkIce(getX() - 1, getY() + 3))
+			&& !getWorld()->checkIce(getX() - 1, getY() + 2) && !getWorld()->checkIce(getX() - 1, getY() + 3) && getWorld()->checkActor(getX() - 1, getY()) != "Boulder")
 		{
 			moveTo(getX() - 1, getY());
 		}
@@ -704,7 +712,7 @@ void Regular_protester::p_move()
 	else if (getDirection() == up && getY() < 60)
 	{
 		if (!getWorld()->checkIce(getX(), getY() + 4) && !getWorld()->checkIce(getX() + 1, getY() + 4)
-			&& !getWorld()->checkIce(getX() + 2, getY() + 4) && !getWorld()->checkIce(getX() + 3, getY() + 4))
+			&& !getWorld()->checkIce(getX() + 2, getY() + 4) && !getWorld()->checkIce(getX() + 3, getY() + 4) && getWorld()->checkActor(getX(), getY() + 1) != "Boulder")
 		{
 			moveTo(getX(), getY() + 1);
 		}
@@ -714,7 +722,7 @@ void Regular_protester::p_move()
 	else if (getDirection() == down && getY() > 0)
 	{
 		if (!getWorld()->checkIce(getX(), getY() - 1) && !getWorld()->checkIce(getX() + 1, getY() - 1)
-			&& !getWorld()->checkIce(getX() + 2, getY() - 1) && !getWorld()->checkIce(getX() + 3, getY() - 1))
+			&& !getWorld()->checkIce(getX() + 2, getY() - 1) && !getWorld()->checkIce(getX() + 3, getY() - 1) && getWorld()->checkActor(getX(), getY() - 1) != "Boulder")
 		{
 			moveTo(getX(), getY() - 1);
 		}
@@ -728,7 +736,7 @@ void Regular_protester::p_move()
 	numStepsLeft--;
 }
 
-void Regular_protester::changeDir()
+void Protester::changeDir()
 {
 	int dir = rand() % 4;
 
@@ -799,6 +807,98 @@ void Regular_protester::changeDir()
 
 	numStepsLeft = rand() % 52 + 8;
 }
+
+void Protester::shortestPath(int startX, int startY)
+{
+	getWorld()->cleanUpShortPath();
+
+	int x = getX(); int y = getY();
+
+	getWorld()->shortestPath(startX, startY, x, y);
+
+	int minSteps = *getWorld()->checkExitPath(x, y);
+
+	/*for (int a = 0; a < 64; a++)
+	{
+		for (int b = 0; b < 64; b++)
+		{
+			std::cout << *getWorld()->checkExitPath(a,b) << " ";
+		}
+		std::cout << std::endl;
+	}*/
+
+
+	int lowest = 10000;
+
+	Direction newDir = getDirection();
+
+	if (getWorld()->checkExitPath(x, y + 1) != nullptr && lowest > * (getWorld()->checkExitPath(x, y + 1)))
+	{
+		bool valid = true;
+		for (int tx = getX(); tx < getX() + 4; tx++)
+		{
+			if (getWorld()->checkIce(tx, getY() + 4) || getWorld()->checkActor(tx, getY() + 4) == "Boulder")
+				valid = false;
+		}
+		if (valid)
+		{
+			newDir = up;
+			lowest = *getWorld()->checkExitPath(x, y + 1);
+		}
+	}
+
+	if (getWorld()->checkExitPath(x - 1, y) != nullptr && lowest > * (getWorld()->checkExitPath(x - 1, y)))
+	{
+		bool valid = true;
+		for (int ty = getY(); ty < getY() + 4; ty++)
+		{
+			if (getWorld()->checkIce(getX() - 1, ty) || getWorld()->checkActor(getX() - 1, ty) == "Boulder")
+				valid = false;
+		}
+		if (valid)
+		{
+			newDir = left;
+			lowest = *getWorld()->checkExitPath(x - 1, y);
+		}
+	}
+
+	if (getWorld()->checkExitPath(x, y - 1) != nullptr && lowest > * (getWorld()->checkExitPath(x, y - 1)))
+	{
+		bool valid = true;
+		for (int tx = getX(); tx < getX() + 4; tx++)
+		{
+			if (getWorld()->checkIce(tx, getY() - 1) || getWorld()->checkActor(tx, getY() - 1) == "Boulder")
+				valid = false;
+		}
+		if (valid)
+		{
+			newDir = down;
+			lowest = *getWorld()->checkExitPath(x, y - 1);
+		}
+	}
+
+	if (getWorld()->checkExitPath(x + 1, y) != nullptr && lowest > * (getWorld()->checkExitPath(x + 1, y)))
+	{
+		bool valid = true;
+		for (int ty = getY(); ty < getY() + 4; ty++)
+		{
+			if (getWorld()->checkIce(getX() + 4, ty) || getWorld()->checkActor(getX() + 4, ty) == "Boulder")
+				valid = false;
+		}
+		if (valid)
+		{
+			newDir = right;
+			lowest = *getWorld()->checkExitPath(x + 1, y);
+		}
+	}
+
+	setDirection(newDir);
+}
+
+
+
+
+//--------------------------------------------------------Regular_protesters-----------------------------------------------------------------
 
 void Regular_protester::doSomething()
 {
@@ -897,6 +997,286 @@ void Regular_protester::doSomething()
 			{
 				for (int x = getX(); x < getX() + 4; x++)
 				{
+					if (getWorld()->checkIce(x, getY() + 4) || getWorld()->checkActor(x, getY() + 4) == "Boulder")
+					{
+						canMove = false;
+					}
+				}
+				if (canMove)
+				{
+					setDirection(up);
+					moveTo(getX(), getY() + 1);
+				}
+				else
+					p_move();
+			}
+			else
+			{
+				for (int x = getX(); x < getX() + 4; x++)
+				{
+					if (getWorld()->checkIce(x, getY() - 1) || getWorld()->checkActor(x, getY() - 1) == "Boulder")
+					{
+						canMove = false;
+					}
+				}
+				if (canMove)
+				{
+					setDirection(down);
+					moveTo(getX(), getY() - 1);
+				}
+				else
+					p_move();
+			}
+			state = 2;
+			numStepsLeft = 0;
+			return;
+		}
+		else if (canMove && player->getY() > (getY() - 4) && player->getY() < (getY() + 4))
+		{
+			if (player->getX() > getX())
+			{
+				for (int y = getY(); y < getY() + 4; y++)
+				{
+					if (getWorld()->checkIce(getX() + 4, y) || getWorld()->checkActor(getX() + 4, y) == "Boulder")
+					{
+						canMove = false;
+					}
+				}
+				if (canMove)
+				{
+					setDirection(right);
+					moveTo(getX() + 1, getY());
+				}
+				else
+					p_move();
+			}
+			else
+			{
+				for (int y = getY(); y < getY() + 4; y++)
+				{
+					if (getWorld()->checkIce(getX() - 1, y) || getWorld()->checkActor(getX() - 1, y) == "Boulder")
+					{
+						canMove = false;
+					}
+				}
+				if (canMove)
+				{
+					setDirection(left);
+					moveTo(getX() - 1, getY());
+				}
+				else
+					p_move();
+			}
+			if (canMove)
+				numStepsLeft = 0;
+
+			canMove = true;
+			state = 2;
+			return;
+		}
+
+
+		//Default Movement
+		if (numStepsLeft == 0)
+		{
+			changeDir();
+		}
+
+		p_move();
+
+		state = 2;
+
+	}
+	else if (state == 0) //dead state
+	{
+
+		if (getX() == 60 && getY() == 60)
+		{
+			setAliveStatus(false);
+		}
+		else
+		{
+			shortestPath(60, 60); //sets direction towards shortest path
+			p_move(); //moves in that path
+		}
+	}
+}
+
+
+//--------------------------------------------------------Hardcore_Protesters-----------------------------------------------------------------
+
+
+
+bool hardcoreprotester::findIceman(int startX, int startY, int maxDistance)
+{
+	getWorld()->cleanUpShortPath();
+
+	int x = getX(); int y = getY();
+
+	getWorld()->i_shortestPath(startX, startY, x, y, maxDistance);
+
+	int minSteps = *getWorld()->i_checkPath(x, y);
+
+	if (minSteps >= maxDistance)
+		return false;
+
+
+	//return true;           //////////////////////////////testing
+
+	int lowest = 10000;
+
+	Direction newDir = getDirection();
+
+	if (getWorld()->i_checkPath(x, y + 1) != nullptr && lowest > * (getWorld()->i_checkPath(x, y + 1)))
+	{
+		bool valid = true;
+		for (int tx = getX(); tx < getX() + 4; tx++)
+		{
+			if (getWorld()->checkIce(tx, getY() + 4) || getWorld()->checkActor(tx, getY() + 4) == "Boulder")
+				valid = false;
+		}
+		if (valid)
+		{
+			newDir = up;
+			lowest = *getWorld()->i_checkPath(x, y + 1);
+		}
+	}
+
+	if (getWorld()->i_checkPath(x - 1, y) != nullptr && lowest > * (getWorld()->i_checkPath(x - 1, y)))
+	{
+		bool valid = true;
+		for (int ty = getY(); ty < getY() + 4; ty++)
+		{
+			if (getWorld()->checkIce(getX() - 1, ty) || getWorld()->checkActor(getX() - 1, ty) == "Boulder")
+				valid = false;
+		}
+		if (valid)
+		{
+			newDir = left;
+			lowest = *getWorld()->i_checkPath(x - 1, y);
+		}
+	}
+
+	if (getWorld()->i_checkPath(x, y - 1) != nullptr && lowest > * (getWorld()->i_checkPath(x, y - 1)))
+	{
+		bool valid = true;
+		for (int tx = getX(); tx < getX() + 4; tx++)
+		{
+			if (getWorld()->checkIce(tx, getY() - 1) || getWorld()->checkActor(tx, getY() - 1) == "Boulder")
+				valid = false;
+		}
+		if (valid)
+		{
+			newDir = down;
+			lowest = *getWorld()->i_checkPath(x, y - 1);
+		}
+	}
+
+	if (getWorld()->i_checkPath(x + 1, y) != nullptr && lowest > * (getWorld()->i_checkPath(x + 1, y)))
+	{
+		bool valid = true;
+		for (int ty = getY(); ty < getY() + 4; ty++)
+		{
+			if (getWorld()->checkIce(getX() + 4, ty) || getWorld()->checkActor(getX() + 4, ty) == "Boulder")
+				valid = false;
+		}
+		if (valid)
+		{
+			newDir = right;
+			lowest = *getWorld()->i_checkPath(x + 1, y);
+		}
+	}
+
+	setDirection(newDir);
+
+	return true;
+}
+
+
+void hardcoreprotester::gotGold()
+{
+	getWorld()->increaseScore(50);
+	getWorld()->playSound(SOUND_PROTESTER_FOUND_GOLD);
+
+	restDelay = std::max(50, 100 - (int)getWorld()->getLevel() * 10);
+
+	state = 2;
+}
+
+void hardcoreprotester::damageintake(int x)
+{
+	p_health -= x;
+
+	if (p_health < 0)
+	{
+		getWorld()->playSound(SOUND_PROTESTER_GIVE_UP);
+		getWorld()->increaseScore(250);
+		state = 0;
+
+	}
+	else
+	{
+		int rest = std::max(50, 100 - (int)getWorld()->getLevel() * 10);
+		restDelay = rest;
+		state = 2;
+	}
+}
+
+void hardcoreprotester::doSomething()
+{
+	if (!isAlive())
+	{
+		return;
+	}
+	Iceman* player = getWorld()->getPlayer();
+
+
+	ticks--; //200 ticks, move perpendicular
+
+
+	if (state == 2) //waiting state
+	{
+		if (restDelay > 0)
+		{
+			restDelay--;
+			return;
+		}
+		else
+		{
+			state = 1;
+			restDelay = std::max(0, 3 - ((int)getWorld()->getLevel() / 4));
+		}
+	}
+	else if (state == 1) //alive state
+	{
+		//------------damage iceman
+
+		if (proximityCheck(4, getWorld()->getPlayer()))
+		{
+			if (delay <= 0)
+			{
+				damage(2);
+				delay = 5;
+			}
+			else
+				delay--;
+
+			state = 2;
+			return;
+		}
+
+		//------------movement
+
+		bool canMove = true;
+
+
+		//Line of sight on Iceman
+		if (canMove && player->getX() > (getX() - 4) && player->getX() < (getX() + 4))
+		{
+			if (player->getY() > getY())
+			{
+				for (int x = getX(); x < getX() + 4; x++)
+				{
 					if (getWorld()->checkIce(x, getY() + 4))
 					{
 						canMove = false;
@@ -976,6 +1356,70 @@ void Regular_protester::doSomething()
 		}
 
 
+		//Hone in on Iceman
+		int M = 16 + ((int)getWorld()->getLevel() * 2);
+		Iceman* player = getWorld()->getPlayer();
+		if (findIceman(player->getX(), player->getY(), M))
+		{
+			/*for (int a = 0; a < 64; a++)
+			{
+				for (int b = 0; b < 64; b++)
+				{
+					std::cout << *getWorld()->i_checkPath(a, b) << " ";
+				}
+				std::cout << std::endl;
+			}*/
+
+
+			p_move();
+			state = 2;
+			return;
+		}
+
+
+
+		//After 200 ticks, move perpendicularly
+		if (ticks <= 0)
+		{
+			if (getDirection() == left || getDirection() == right)
+			{
+				if (getY() > 0 && !getWorld()->checkIce(getX(), getY() - 1) && !getWorld()->checkIce(getX() + 1, getY() - 1)
+					&& !getWorld()->checkIce(getX() + 2, getY() - 1) && !getWorld()->checkIce(getX() + 3, getY() - 1))
+				{
+					ticks = 200;
+					setDirection(down);
+					p_move();
+				}
+
+				else if (getY() < 60 && !getWorld()->checkIce(getX(), getY() + 4) && !getWorld()->checkIce(getX() + 1, getY() + 4)
+					&& !getWorld()->checkIce(getX() + 2, getY() + 4) && !getWorld()->checkIce(getX() + 3, getY() + 4))
+				{
+					ticks = 200;
+					setDirection(up);
+					p_move();
+				}
+			}
+			else if (getDirection() == up || getDirection() == down)
+			{
+				if (getX() > 0 && !getWorld()->checkIce(getX() - 1, getY()) && !getWorld()->checkIce(getX() - 1, getY() + 1)
+					&& !getWorld()->checkIce(getX() - 1, getY() + 2) && !getWorld()->checkIce(getX() - 1, getY() + 3))
+				{
+					ticks = 200;
+					setDirection(left);
+					p_move();
+				}
+
+				else if (getX() < 60 && !getWorld()->checkIce(getX() + 4, getY()) && !getWorld()->checkIce(getX() + 4, getY() + 1)
+					&& !getWorld()->checkIce(getX() + 4, getY() + 2) && !getWorld()->checkIce(getX() + 4, getY() + 3))
+				{
+					ticks = 200;
+					setDirection(right);
+					p_move();
+				}
+			}
+			state = 2;
+		}
+
 		//Default Movement
 		if (numStepsLeft == 0)
 		{
@@ -985,103 +1429,28 @@ void Regular_protester::doSomething()
 		p_move();
 
 		state = 2;
+
 	}
 	else if (state == 0) //dead state
 	{
-		getWorld()->increaseScore(100);
-		getWorld()->shortestpath(getX(), getY(), 60, 60, this);
-		setAliveStatus(false);
-	}
-}
-//-------------------------------Hardcore Protester----------------------------------
 
-
-hardcoreprotester::hardcoreprotester(int x, int y, StudentWorld* world)
-	:Actor(IID_HARD_CORE_PROTESTER, x, y, left, world, 1.0, 0), hitpoints(20), cooldown(1), delay(0)
-{
-	setVisible(true);
-}
-
-void hardcoreprotester::damageintake(int x)
-{
-	hitpoints -= x;
-}
-
-void hardcoreprotester::damage()
-{
-	bool trigger = false;
-	Iceman* player = getWorld()->getPlayer();
-
-	int pX = getX();
-	int pY = getY();
-
-	int iX = player->getX();
-	int iY = player->getY();
-
-	if (cooldown == 1)
-	{
-		if (pX >= iX - 4) // checks left
+		if (getX() == 60 && getY() == 60)
 		{
-
-			trigger = true;
-			if (trigger)
-			{
-				getWorld()->playSound(SOUND_PROTESTER_YELL);
-				player->damage(2);
-				return;
-			}
+			setAliveStatus(false);
 		}
-		else if (pX <= iX + 4) // checks right
+		else
 		{
-			trigger = true;
-			if (trigger)
-			{
-				getWorld()->playSound(SOUND_PROTESTER_YELL);
-				player->damage(2);
-				return;
-			}
+			shortestPath(60, 60); //sets direction towards shortest path
+			p_move(); //moves in that path
 		}
-		else if (pY >= iY - 4) // checks down
-		{
-			trigger = true;
-			if (trigger)
-			{
-				getWorld()->playSound(SOUND_PROTESTER_YELL);
-				player->damage(2);
-				return;
-			}
-		}
-		else if (pY <= iY + 4) // checks up
-		{
-			trigger = true;
-			if (trigger)
-			{
-				getWorld()->playSound(SOUND_PROTESTER_YELL);
-				player->damage(2);
-				return;
-			}
-		}
-		delay = 5;
-		//cooldown = 0;
-		return;
-	}
-	else if (cooldown == 0)
-	{
-		//coolDown();
-		return;
-	}
-
-}
-
-
-void hardcoreprotester::doSomething()
-{
-	if (!isAlive())
-	{
-		return;
 	}
 }
 
 
 
+/*
 
+modified date 6/4/2021 @ 2:04pm
+
+
+*/
