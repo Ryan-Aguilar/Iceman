@@ -9,7 +9,7 @@ class StudentWorld;
 //--------------------------------------------------------Actor-----------------------------------------------------------------------------
 
 //Actor is an abstract base class or a pure virtual class
-//We don't want to ever create an actor and we don't want it to be able to doSomething()
+//We don't want to ever create an actor and we don't want it to be able to doSomething() 
 //It is just used as an interface for all other game objects
 
 class Actor : public GraphObject {
@@ -55,13 +55,13 @@ private:
 class Iceman : public Actor {
 public:
 	Iceman(StudentWorld* world) :
-		Actor(IID_PLAYER, 30, 60, right, world, 1.0, 0), i_health(10), i_squirt(500), i_sonarCharge(1),
+		Actor(IID_PLAYER, 30, 60, right, world, 1.0, 0), i_health(10), i_squirt(5), i_sonarCharge(1),
 		i_gold_sack(0), i_facing(right) {}
 
 	void doSomething();
 
 	void damage(int damage); // updates the players health, subtracts damage parameter fromn health data member
-	int getHealth() const; // returns tje HP
+	int getHealth() const; // returns the HP
 
 	std::string type();
 
@@ -90,6 +90,7 @@ public:
 	Ice(int x, int y, StudentWorld* world) :
 		Actor(IID_ICE, x, y, right, world, .25, 3) {}
 	void doSomething() { /*does nothing*/ }
+	std::string type() { return "Ice"; }
 };
 
 //--------------------------------------------------------Boulder-----------------------------------------------------------------------------
@@ -98,7 +99,7 @@ class Boulder : public Actor
 {
 public:
 	Boulder(int x, int y, StudentWorld* world) :
-		Actor(IID_BOULDER, x, y, down, world, 1.0, 1), delay(30) {
+		Actor(IID_BOULDER, x, y, down, world, 1.0, 1), delay(30), time(0) {
 		setVisible(true);
 	}
 
@@ -109,6 +110,7 @@ public:
 
 private:
 	int delay;
+	int time;
 };
 
 
@@ -120,14 +122,13 @@ class Oil_Barrel : public Actor
 public:
 	Oil_Barrel(int x, int y, StudentWorld* world) :
 		Actor(IID_BARREL, x, y, right, world, 1.0, 2) {
-		setVisible(true);
+		setVisible(false);
 	}
 
 	std::string type();
 	void doSomething();
 	void sonarSearch();
 
-	// barrel needs to reward player a.k.a iceman 1000 points for picking up oil.
 private:
 
 };
@@ -144,7 +145,7 @@ public:
 		if (state == 1)
 			setVisible(false);
 		else if (state == 0)
-			setVisible(true);
+			setVisible(false);
 
 		setAliveStatus(true);
 	}
@@ -207,31 +208,27 @@ private:
 
 };
 
-//--------------------------------------------------------Regular Protester-----------------------------------------------------------------------------
+//--------------------------------------------------------Protester-----------------------------------------------------------------------------
 
-
-class Regular_protester : public Actor {
+class Protester : public Actor
+{
 public:
-	Regular_protester(int x, int y, StudentWorld* world);
+	Protester(int imageID, int x, int y, Direction startDir, float size, unsigned int depth, StudentWorld* world, int hlth);
 
-
-	void damage(int damage); // this damage function right now is only intended to harm the iceman. so protesters hurt iceman
-
-	void coolDown();
-	void resetcoolDown(int x);
-
-	void p_move(); //might use, might not, who knows
-	void changeDir();
-
-	void gotGold();
-
-	void damageintake(int x);
 	std::string type();
-	void doSomething();
 
+	virtual void damage(int damage); // this damage function right now is only intended to harm the iceman. so protesters hurt iceman
 
+	virtual void p_move(); //might use, might not, who knows
+	virtual void changeDir();
 
-private:
+	virtual void shortestPath(int x, int y); //sets Iceman direction towards the shortest path out of the ice field
+
+	virtual void gotGold();
+
+	virtual void damageintake(int x);
+
+protected:
 	int state; // 0 - dead , 1 - alive, 2 - waiting
 	int cooldown; // this is a state variable that will regulate the delay. this will trigger the delay. 1 its ready to shout. 2 its not ready to shoot.
 	int delay; // this is to make the protester wait 15 ticks so it can shout again.
@@ -239,30 +236,46 @@ private:
 	int p_health;
 	int numStepsLeft;
 	int ticks; //checks for 200 ticks pass
+
 };
-//--------------------------------------------------HardCore Protester---------------------------------------
 
-class hardcoreprotester : public Actor {
+
+//--------------------------------------------------------Regular Protester-----------------------------------------------------------------------------
+
+
+class Regular_protester : public Protester {
 public:
-	hardcoreprotester(int x, int y, StudentWorld* world);
+	//Regular_protester(int x, int y, StudentWorld* world);
+	Regular_protester(int x, int y, StudentWorld* world) :
+		Protester(IID_PROTESTER, x, y, left, 1.0, 1, world, 5) {}
 
-	void damageintake(int x);
-
-	void damage();
 
 	void doSomething();
 
-private:
-	int hitpoints;
-	int cooldown;
-	int delay;
-
-
-
 };
 
 
+//--------------------------------------------------Hardcore Protester---------------------------------------
+
+class hardcoreprotester : public Protester {
+public:
+	hardcoreprotester(int x, int y, StudentWorld* world) :
+		Protester(IID_HARD_CORE_PROTESTER, x, y, left, 1.0, 1, world, 20) {}
+
+	bool findIceman(int x, int y, int maxDistance); //hone in on iceman
+
+	void gotGold();
+	void damageintake(int x);
+	void doSomething();
+
+};
 
 #endif
 
 
+/*
+
+modified date 6/4/2021 @ 2:04pm
+
+
+*/
